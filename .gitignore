@@ -1,0 +1,9 @@
+.vscode/
+.devcontainer/
+**/__pycache__/
+/__pycache__
+.DS_Store
+
+.dockerignore
+Dockerfile
+

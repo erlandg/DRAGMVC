@@ -1,0 +1,15 @@
+tqdm
+numpy
+scipy
+scikit-learn
+pandas
+pydantic
+pyyaml
+tabulate
+tensorboard
+numba
+typing_extensions
+wandb
+plotly
+seaborn
+wordcloud
