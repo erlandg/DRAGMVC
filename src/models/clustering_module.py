@@ -31,7 +31,7 @@ class DDC(nn.Module):
 
     def forward(self, x, **kwargs):
         for layer in self.hidden:
-            if type(layer) not in (GraphConv):
+            if type(layer) not in (GraphConv,):
                 x = layer(x)
             else:
                 x = layer(x, **kwargs)

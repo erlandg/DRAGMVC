@@ -2,8 +2,6 @@ import numpy as np
 import torch as th
 import torch.nn as nn
 
-from .graph_operations import ContrastiveGraphConv
-
 
 class _Fusion(nn.Module):
     def __init__(self, cfg, input_sizes):
