@@ -29,10 +29,10 @@ def wandb_init(name, cfg):
         attention_features = cfg.model_config.graph_attention_configs.attention_features
         dropout = cfg.model_config.graph_attention_configs.dropout
         mask_power = cfg.model_config.graph_attention_configs.mask_power
-        standard_gcn = cfg.model_config.graph_attention_configs.standard_gcn
+        graph_attention = not cfg.model_config.graph_attention_configs.standard_gcn
         mask_weighting = cfg.model_config.graph_attention_configs.mask_weighting
     except AttributeError:
-        graph_layers = attention_features = dropout = mask_power = standard_gcn = mask_weighting = None
+        graph_layers = attention_features = dropout = mask_power = graph_attention = mask_weighting = None
 
     parameters = {
         "dataset": cfg.dataset_config.name,
@@ -46,7 +46,7 @@ def wandb_init(name, cfg):
         "semi_supervised_weight": cfg.model_config.loss_config.semi_supervised_weight,
         "pretrained_cnn": pretrained_cnn,
         "graph_layers": graph_layers,
-        "graph_attention": not standard_gcn,
+        "graph_attention": graph_attention,
         "attention_heads": attention_features,
         "graph_dropout": dropout,
         "graph_mask_power": mask_power,
@@ -212,7 +212,7 @@ def main(name="mvc"):
     if track_logs:
         wandb_config = wandb_init(experiment_name, cfg)
     experiment_identifier = wandb.util.generate_id()
-    load_graph = cfg.model_config.__class__ in [config.defaults.GraphCoMVC, config.defaults.GraphMVC]
+    load_graph = cfg.model_config.__class__ in [config.defaults.DRAGMVC, config.defaults.GraphMVC]
 
 
     if (config.defaults.CNN in [type(__) for __ in cfg.model_config.backbone_configs]) and any(_.pretrained_model is not None for _ in cfg.model_config.backbone_configs if type(_) == config.defaults.CNN):
@@ -345,4 +345,4 @@ def main(name="mvc"):
 
 
 if __name__ == '__main__':
-    main("over-smoothing")
+    main("testing")

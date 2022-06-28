@@ -71,41 +71,6 @@ def normalise_graph(graph, remove_diagonal = True, self_connection = False, prec
         print(f"Graph type {type(graph)} not recognised.")
 
 
-class LearnedGraph(nn.Module):
-
-    def __init__(self, in_features, out_features, N, device = None) -> None:
-        super(LearnedGraph, self).__init__()
-        self.device = device
-        self.w_s = nn.Parameter(torch.empty((N, 1), device=self.device), requires_grad=True)
-        self.w_r = nn.Parameter(torch.empty((N, 1), device=self.device), requires_grad=True)
-        self._init_weights()
-        self.weight = nn.Parameter(torch.empty((in_features, out_features)), requires_grad=True)
-
-    def _init_weights(self): 
-        torch.nn.init.uniform_(self.w_s)
-        torch.nn.init.uniform_(self.w_r)
-
-    @property
-    def symmetric_graph(self):
-        return (torch.abs(self.graph) + torch.abs(self.graph).T) / 2
-
-    @property
-    def graph(self):
-        return torch.matmul(self.w_s, self.w_r.T)
-
-    @property
-    def normalised_graph(self):
-        return normalise_graph(torch.matmul(self.w_s, self.w_r.T))
-
-    def forward(self, input, backward = False):
-        if not backward:
-            H = torch.matmul(input, self.weight)
-        else:
-            H = torch.matmul(input, self.weight.t())
-
-        return torch.matmul(normalise_graph(self.symmetric_graph), H)
-
-
 class GraphConv(nn.Module):
     def __init__(
         self,
@@ -135,14 +100,6 @@ class GraphConv(nn.Module):
         self.eye = None
         if not self.laplacian:
             assert (in_features is not None) and (out_features is not None), "Requires in_features and out_features arguments."
-            # self.model = thgeo.nn.GATConv(
-            #     in_features,
-            #     out_features,
-            #     fill_value = 1.,
-            #     dropout = 0.6,
-            #     bias = False,
-            # )
-            # self._init_weights()
 
             self.t_s = nn.Parameter(torch.empty((attention_features, out_features)), requires_grad=True)
             self.t_r = nn.Parameter(torch.empty((attention_features, out_features)), requires_grad=True)
@@ -161,36 +118,7 @@ class GraphConv(nn.Module):
             self.s = s
             self.m = m
 
-
-    # def _init_weights(self):
-    #         state_dict = self.model.state_dict()
-    #         init_weights = OrderedDict()
-    #         if "bias" in state_dict: init_weights["bias"] = state_dict["bias"] # zeros
-    #         for k, v in state_dict.items():
-    #             if k != "bias":
-    #                 try:
-    #                     init_weights[k] = torch.nn.init.xavier_uniform_(v)
-    #                 except ValueError:
-    #                     pass
-    #         for k in set(state_dict.keys()) - set(init_weights.keys()):
-    #             init_weights[k] = state_dict[k]
-    #         self.model.load_state_dict(init_weights)
-
-
     def get_mask(self, graph, power = 1):
-        # if self.eye is None:
-        #     N = graph.shape[0]
-        #     if graph.is_sparse:
-        #         mask = torch.sparse_coo_tensor(
-        #             torch.cat([torch.arange(N).reshape(1,-1) for _ in range(2)], dim=0).to(graph.device),
-        #             torch.ones(N, device=graph.device),
-        #             (N, N)
-        #         )
-        #     else:
-        #         mask = torch.eye(N, device = graph.device)
-        # else:
-        #     mask = self.eye
-
         graph = normalise_graph(graph, remove_diagonal = True, self_connection = False)
         mask = addit = graph
         for _ in range(power - 1):
@@ -202,19 +130,20 @@ class GraphConv(nn.Module):
             else:
                 addit = addit @ graph
             mask = mask + addit
-        # mask = normalise_graph(mask, remove_diagonal = False, self_connection = False)
-        if graph.is_sparse: return normalise_graph(
-            mask,
-            remove_diagonal=False,
-            self_connection=False,
-            precomputed_sparse_identity_matrix=self.eye
-        ).coalesce()
-        else: return normalise_graph(mask,
-        remove_diagonal=False,
-        self_connection=False,
-    )
-        # mask.coalesce().values().fill_(1.)
-        # return mask.coalesce()
+            
+        if graph.is_sparse:
+            return normalise_graph(
+                mask,
+                remove_diagonal=False,
+                self_connection=False,
+                precomputed_sparse_identity_matrix=self.eye
+            ).coalesce()
+        else:
+            return normalise_graph(
+                mask,
+                remove_diagonal=False,
+                self_connection=False,
+            )
 
 
     @staticmethod
@@ -237,19 +166,8 @@ class GraphConv(nn.Module):
 
 
     def neighbourhood_softmax(self, graph, mask=None):
-        # mask = mask + torch.eye(mask.shape[0], dtype=bool, device=mask.device)
         if mask is not None: graph[~mask] = -10e10 # remove points outside neighbourhood
         return F.softmax(graph, dim=1)
-
-
-    # def get_attention(self, H, G):
-    #     C1 = torch.sigmoid(torch.matmul(H, self.t_s))
-    #     # C1 = G * C1 # Multiply rows
-    #     C2 = torch.sigmoid(torch.matmul(H, self.t_r).t())
-    #     # C2 = G * C2.t() # multiply columns
-    #     S = C1 @ C2
-    #     # return G * (C1 @ C2)
-    #     return self.neighbourhood_softmax(S, torch.matrix_power(G, 2) > 0) # softmax S wrt. complete G or extracted G (as it is currently)?
 
 
     def get_edge_index_attention(self, H, graph, mask = None, sparse = True):
@@ -264,9 +182,11 @@ class GraphConv(nn.Module):
         else:
             eye = torch.eye(H.shape[0], device=H.device)
             if C1.shape[1] == 1:
-                S = ((mask * C1) + (mask * C2)) / 2
+                if self.mask_weighting:
+                    S = ((mask * C1) + (mask * C2)) / 2
+                else:
+                    S = (C1 + C2) / 2
                 if mask is not None:
-                    # S = self.mask_graph(S, mask, add_mask_to_A = True, mask_weighting = self.mask_weighting, dense_A = True)
                     if mask.is_sparse: S[mask.to_dense() <= 0] = -1e11
                     else: S[mask <= 0] = -1e11
                 out = F.softmax(S, dim = 1)
@@ -277,14 +197,10 @@ class GraphConv(nn.Module):
                 # Multi-head attention
                 S = []
                 for _ in range(C1.shape[1]):
-                    S_ = ((mask * C1[:,_:_+1]) + (mask * C2[_:_+1,:])) / 2
-                    # S_ = self.mask_graph(
-                    #     S_,
-                    #     mask,
-                    #     add_mask_to_A = mask.is_sparse,
-                    #     mask_weighting = self.mask_weighting,
-                    #     dense_A = True
-                    # )
+                    if self.mask_weighting:
+                        S_ = ((mask * C1[:,_:_+1]) + (mask * C2[_:_+1,:])) / 2
+                    else:
+                        S_ = (C1[:,_:_+1] + C2[_:_+1,:]) / 2
                     if mask.is_sparse: S_[~mask.to_dense().to(bool)] = -1e11
                     else: S_[~mask.to(bool)] = -1e11
                     S.append(S_)
@@ -296,9 +212,6 @@ class GraphConv(nn.Module):
 
 
     def _weighted_graph_conv_forward(self, input, graph = None, C = None, backward = False, return_attention = False):
-        # Altered from the original inspiration to only use weight and graph
-        # return self.model(input, graph.edge_index_dict["view_0"]), None
-
         if backward is False:
             H_ = torch.matmul(input, self.weight.t())
         else:
@@ -390,26 +303,3 @@ class GraphConv(nn.Module):
         return_attention: bool = False,
     ):
         return self._weighted_graph_conv_forward(input, graph = graph, C = C, backward = backward, return_attention = return_attention)
-
-
-
-
-class ContrastiveGraphConv(nn.Module):
-
-    def __init__(self) -> None:
-        super(ContrastiveGraphConv, self).__init__()
-
-
-    def forward(
-        self,
-        input: torch.Tensor,
-        graph: torch.Tensor,
-        **_
-    ):
-        s = .5
-        m = 2
-
-        L = graph_laplacian(graph)
-        C = torch.matrix_power(torch.eye(L.shape[0], device=L.device) + s*L, m)
-
-        return torch.matmul(C, input)

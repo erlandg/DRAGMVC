@@ -6,4 +6,4 @@ from .rgbd import *
 from .fmnist import *
 from .coil import *
 from .mimic import *
-from .graph_mimic import *
+from .graph_mvc import *

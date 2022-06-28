@@ -34,7 +34,7 @@ class Loss(Config):
     # Use labelled data for semi-supervised loss
     n_semi_supervised: int = None
     semi_supervised_weight: float = 1.
-    semi_supervised_equal_label_split: bool = False,
+    semi_supervised_equal_label_split: bool = False
     # Optional weights for the loss terms. Set to None to have all weights equal to 1.
     weights: Tuple[Union[float, int], ...] = None
     # Multiplication factor for the sigma hyperparameter
@@ -220,7 +220,7 @@ class GraphMVC(Config):
     warmup_optimizer: Optimizer = None
 
 
-class GraphCoMVC(Config):
+class DRAGMVC(Config):
     # Tuple of encoder configs. One for each modality.
     backbone_configs: Tuple[Union[MLP, CNN], ...]
     # Tuple of graph attention layers. One for each modality.
@@ -246,7 +246,7 @@ class Experiment(Config):
     # Dataset config
     dataset_config: Dataset
     # Model config
-    model_config: Union[GraphCoMVC, GraphMVC, CoMVC, SiMVC, DDC]
+    model_config: Union[DRAGMVC, GraphMVC, CoMVC, SiMVC, DDC]
     # Number of training runs
     n_runs = 20
     # Number of training epochs

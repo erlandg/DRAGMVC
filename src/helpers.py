@@ -8,7 +8,7 @@ from sklearn.metrics import confusion_matrix
 from scipy.optimize import linear_sum_assignment
 
 import config
-from lib.graph_operations import GraphConv, ContrastiveGraphConv, LearnedGraph
+from lib.graph_operations import GraphConv
 
 
 def npy(t, to_cpu=True):

@@ -256,14 +256,14 @@ def eval_experiment(cfg_name, tag, plot=False):
         if cfg.dataset_config.eval_sample_proportion is not None:
             (_, graph_bool), dataset = load_dataset(
                 **cfg.dataset_config.dict(),
-                load_graph = cfg.model_config.__class__ in [config.defaults.GraphCoMVC, config.defaults.GraphMVC],
+                load_graph = cfg.model_config.__class__ in [config.defaults.DRAGMVC, config.defaults.GraphMVC],
                 seed=tag,
                 downscale_244=downscale
             )
         else:
             dataset, graph_bool = load_dataset(
                 **cfg.dataset_config.dict(),
-                load_graph = cfg.model_config.__class__ in [config.defaults.GraphCoMVC, config.defaults.GraphMVC],
+                load_graph = cfg.model_config.__class__ in [config.defaults.DRAGMVC, config.defaults.GraphMVC],
                 seed=tag,
                 downscale_244=downscale
             )

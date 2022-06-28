@@ -10,11 +10,11 @@ from config.defaults import (
     Dataset,
     Optimizer,
     GraphMVC,
-    GraphCoMVC,
+    DRAGMVC,
 )
 
 
-mimic_graph = Experiment(
+gmvc = Experiment(
     dataset_config=Dataset(name="graph_dataset"),
     model_config=GraphMVC(
         backbone_configs=(
@@ -72,33 +72,18 @@ mimic_graph = Experiment(
     batch_size=100
 )
 
-mimic_graph_contrast = Experiment(
+gmvc_contrast = Experiment(
     dataset_config = Dataset(
-        # 2290 x View 0: (2290, 1, 256, 256), View 1: (2290, 66), View 2: (2290, 2202) - 5 classes
-
-        # knn_edema_dataset 3520 x (1,256,256), (66,), (210,) - 2 classes
-        # mimic_sample 1747 x (1,256,256), (66,), (210,) - 2 classes
-        # knn_edema_dataset_no_images
-        # knn_edema_dataset_image_vital
-        # knn_edema_dataset_image_lab
 
         # cora 2708 x (1433,), (2708,) - 7 classes
-        # balanced_cora 1260 x (1433,), (1260,) - 7 classes
-
         # citeseer 3327 x (3703,), (3327,) - 6 classes
-        # balanced_citeseer 1584 x (3703,), (1584,) - 6 classes
-        
         # pubmed 19717 x (500,), (19717,) - 3 classes
-        # balanced_pubmed 12309 x (500,), (12309,) - 3 classes
-
-        # amazon_photo 7650 x (745,), (745,) - 8 classes
-        # amazon_computers 13752 x (767,), (767,) - 10 classes
         
         name = "cora",
         # normalise_images = True,
         # eval_sample_proportion = .20,
     ),
-    model_config = GraphCoMVC(
+    model_config = DRAGMVC(
         backbone_configs = (
             # CNN(
             #     input_size = (3, 256, 256),
@@ -155,8 +140,6 @@ mimic_graph_contrast = Experiment(
             layer_type = "graph_conv"
         ),
         loss_config = Loss(
-            # ddc_1, ddc_2, ddc_2_flipped, ddc_3, contrast, contrast_graph,
-            # reconstruction_structure, reconstruction_feature, semi_supervised
             funcs = "ddc_1|ddc_2|ddc_3|contrast",
             # n_semi_supervised = 500,
             # semi_supervised_equal_label_split = True,

@@ -7,7 +7,7 @@ from models.ddc import DDCModel
 from models.simple_mvc import SiMVC
 from models.contrastive_mvc import CoMVC
 from models.graph_mvc import GraphMVC
-from models.contrastive_graph_mvc import GraphCoMVC
+from models.dragmvc import DRAGMVC
 from eamc.model import EAMC
 from data.load import load_dataset
 
@@ -17,7 +17,7 @@ MODEL_CONSTRUCTORS = {
     "SiMVC": SiMVC,
     "CoMVC": CoMVC,
     "GraphMVC": GraphMVC,
-    "GraphCoMVC": GraphCoMVC,
+    "DRAGMVC": DRAGMVC,
     "EAMC": EAMC
 }
 
@@ -28,9 +28,9 @@ def build_model(model_cfg):
 
     :param model_cfg: Config of model to build
     :type model_cfg: Union[config.defaults.DDCModel, config.defaults.SiMVC, config.defaults.CoMVC,
-                           config.defaults.GraphMVC, config.defaults.GraphCoMVC, config.eamc.defaults.EAMC]
+                           config.defaults.GraphMVC, config.defaults.DRAGMVC, config.eamc.defaults.EAMC]
     :return: Model
-    :rtype: Union[DDCModel, SiMVC, CoMVC, GraphMVC, GraphCoMVC, EAMC]
+    :rtype: Union[DDCModel, SiMVC, CoMVC, GraphMVC, DRAGMVC, EAMC]
     """
     if model_cfg.class_name not in MODEL_CONSTRUCTORS:
         raise ValueError(f"Invalid model type: {model_cfg.type}")
@@ -100,7 +100,7 @@ def from_file(
         if return_diagnoses:
             if dataset_kwargs["eval_sample_proportion"] is not None:
                 _, (views, labels, graph), (__, diags) = load_dataset(
-                    load_graph = cfg.model_config.__class__ in [config.defaults.GraphCoMVC, config.defaults.GraphMVC],
+                    load_graph = cfg.model_config.__class__ in [config.defaults.DRAGMVC, config.defaults.GraphMVC],
                     to_dataset=False,
                     return_diagnoses=return_diagnoses,
                     downscale_244=downscale,
@@ -108,7 +108,7 @@ def from_file(
                 )
             else:
                 (views, labels, graph), _, (diags,) = load_dataset(
-                    load_graph = cfg.model_config.__class__ in [config.defaults.GraphCoMVC, config.defaults.GraphMVC],
+                    load_graph = cfg.model_config.__class__ in [config.defaults.DRAGMVC, config.defaults.GraphMVC],
                     to_dataset=False,
                     return_diagnoses=return_diagnoses,
                     downscale_244=downscale,
@@ -118,7 +118,7 @@ def from_file(
         else:
             if dataset_kwargs["eval_sample_proportion"] is not None:
                 _, (views, labels, graph) = load_dataset(
-                    load_graph = cfg.model_config.__class__ in [config.defaults.GraphCoMVC, config.defaults.GraphMVC],
+                    load_graph = cfg.model_config.__class__ in [config.defaults.DRAGMVC, config.defaults.GraphMVC],
                     to_dataset=False,
                     return_diagnoses=return_diagnoses,
                     downscale_244=downscale,
@@ -126,7 +126,7 @@ def from_file(
                 )
             else:
                 (views, labels, graph), _ = load_dataset(
-                load_graph = cfg.model_config.__class__ in [config.defaults.GraphCoMVC, config.defaults.GraphMVC],
+                load_graph = cfg.model_config.__class__ in [config.defaults.DRAGMVC, config.defaults.GraphMVC],
                 to_dataset=False,
                 return_diagnoses=return_diagnoses,
                 downscale_244=downscale,

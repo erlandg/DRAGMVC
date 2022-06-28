@@ -1,5 +1,5 @@
 import torch.nn as nn
-from lib.graph_operations import GraphConv, ContrastiveGraphConv, LearnedGraph
+from lib.graph_operations import GraphConv
 
 
 class DDC(nn.Module):
@@ -31,7 +31,7 @@ class DDC(nn.Module):
 
     def forward(self, x, **kwargs):
         for layer in self.hidden:
-            if type(layer) not in (GraphConv, ContrastiveGraphConv):
+            if type(layer) not in (GraphConv):
                 x = layer(x)
             else:
                 x = layer(x, **kwargs)
