@@ -43,4 +43,4 @@ The model may be evaluated by running (also from ./src/)
 ```bash
 python -m models.evaluate -c <CONFIG_NAME> -t <MODEL_TAG> [--plot]
 ```
-with a tag corresponding to the model's save path in ./models/. This will extract the best (minimum loss) model and produce fusion plots and sample X-rays (if applicable) and performance metrics.
+with a tag corresponding to the model's save path in ./models/. This will extract the best (minimum loss) run and produce fusion plots and sample images (if applicable) and performance metrics.
